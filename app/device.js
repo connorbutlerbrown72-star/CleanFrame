@@ -56,6 +56,12 @@
       api().launchAppControl(control, 'org.tizen.art-app', function () { finish(null); }, function (err) { finish(failure(err)); });
     } catch (err) { finish(failure(err)); }
   }
+  // TVs without Samsung's Art app (models other than The Frame) omit Art Mode.
+  function hasArt() {
+    if (!api()) return true;
+    try { return !!api().getAppInfo('org.tizen.art-app'); }
+    catch (err) { return false; }
+  }
   function home(done) { launchApp('com.samsung.tv.csfs', done); }
   function settings(done) { launchApp('com.samsung.tv.coba.setting', done); }
   function apps(done) {
@@ -80,5 +86,5 @@
       }, function (err) { finish(failure(err)); });
     } catch (err) { finish(failure(err)); }
   }
-  window.FrameDevice = { launch: launch, launchApp: launchApp, art: art, home: home, settings: settings, apps: apps };
+  window.FrameDevice = { launch: launch, launchApp: launchApp, art: art, hasArt: hasArt, home: home, settings: settings, apps: apps };
 }());

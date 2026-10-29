@@ -491,7 +491,11 @@
   }
 
   /* ---------- Navigation targets ---------- */
-  function utils() { return ['art', 'apps', 'settings']; }
+  var artAvailable = null;
+  function utils() {
+    if (artAvailable === null) artAvailable = FrameDevice.hasArt();
+    return artAvailable ? ['art', 'apps', 'settings'] : ['apps', 'settings'];
+  }
   /* prev/next run along the apps; out goes to the controls, inn comes back (or to a per-app action). */
   function axes() {
     var v = S.c.layout === 'list';

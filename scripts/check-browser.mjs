@@ -42,7 +42,7 @@ async function run(name, fn) {
 async function closePage() { if (current) { current.__closing = true; await current.close(); current = null; } }
 
 // Production still calls its unmodified device.js adapter.
-function installHarness({ seed, legacy, mock, catalog, minuteMs, catalogFailure, noFontAPI, storageFailure, currentAppId, initiallyHidden, pauseHiddenFrames, rejectDecode }) {
+function installHarness({ seed, legacy, mock, catalog, minuteMs, catalogFailure, noFontAPI, storageFailure, currentAppId, initiallyHidden, pauseHiddenFrames, rejectDecode, noArtApp }) {
   if (!sessionStorage.getItem('__cleanframe_seeded')) {
     if (seed !== undefined) localStorage.setItem('cleanframe.home.v1', typeof seed === 'string' ? seed : JSON.stringify(seed));
     if (legacy !== undefined) localStorage.setItem('cleanframe.shore.v1', typeof legacy === 'string' ? legacy : JSON.stringify(legacy));
@@ -82,6 +82,10 @@ function installHarness({ seed, legacy, mock, catalog, minuteMs, catalogFailure,
     ApplicationControl: function (operation, uri, mime, category, data) { Object.assign(this, { operation, uri, mime, category, data }); },
     application: {
       getCurrentApplication() { return { appInfo: { id: currentAppId || 'nClrkHome1.FrameHome' } }; },
+      getAppInfo(id) {
+        if (id === 'org.tizen.art-app' && !noArtApp) return { id, name: 'Art' };
+        throw { name: 'NotFoundError', message: 'App not installed for QA' };
+      },
       getAppsInfo(ok, fail) {
         const tv = window.__tv;
         tv.catalogCalls++;
@@ -420,6 +424,13 @@ try {
     await current.evaluate(() => { window.dispatchEvent(new Event('focus')); __tv.launchFailure = true; });
     await scene('home'); await act('home.app.netflix'); await current.waitForFunction(() => ShoreQA.where().view === 'message');
     check('Launch failure is shown', /could not|unavailable|try again/i.test(await current.locator('#stage').innerText()));
+  });
+  await run('Art Mode is omitted without the Art app', async () => {
+    await page({ noArtApp: true }); await scene('home');
+    const actions = await current.locator('#utils .u').evaluateAll(nodes => nodes.map(n => n.getAttribute('data-action')));
+    check('TV without Samsung Art shows only All apps and Settings', actions.join() === 'util.apps,util.settings', actions);
+    await act('util.apps'); await current.waitForFunction(() => !ShoreQA.state().catalog.loading);
+    check('Remaining controls still open', (await current.evaluate(() => ShoreQA.where().view)) === 'apps');
   });
   await run('Independent app identity self-filter', async () => {
     const appId = 'AbCdEf1234.MyHome';
