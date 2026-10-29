@@ -115,6 +115,8 @@ def load_settings(root=ROOT):
 
 def read_password(path, root=ROOT):
     """Read an owner-only regular file outside app/ and tracked source folders."""
+    if os.name == 'nt':
+        raise ValueError('On Windows, save certificate passwords in Certificate Manager and set password_file to null.')
     path = Path(path)
     resolved = path.resolve()
     if any(resolved.is_relative_to((root / folder).resolve()) for folder in ['app', '.git']):

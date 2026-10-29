@@ -325,6 +325,23 @@ with zipfile.ZipFile(target, 'a') as archive:
         cli.write_text('#!/nonexistent-offline-test-interpreter\n')
         self.assertEqual(package.sign([str(cli)], timeout=2), 127)
 
+    def test_windows_signing_uses_saved_passwords_only(self):
+        cli = self.root / 'fake-sdk'
+        cli.write_text('#!' + sys.executable + '\nprint("Password:", end="", flush=True)\ninput()\n')
+        cli.chmod(0o700)
+        with self.assertRaisesRegex(ValueError, 'requested a password'):
+            package.sign_windows([str(cli)], timeout=2)
+        with self.assertRaisesRegex(ValueError, 'Certificate Manager'):
+            package.sign_windows([str(cli)], b'synthetic password', timeout=2)
+        cli.write_text('#!' + sys.executable + '\nimport time\ntime.sleep(10)\n')
+        with self.assertRaisesRegex(ValueError, 'timed out'):
+            package.sign_windows([str(cli)], timeout=0.1)
+        cli.write_text('#!' + sys.executable + '\nprint("Signed with synthetic profile")\n')
+        self.assertEqual(package.sign_windows([str(cli)], timeout=2), 0)
+        cli.write_text('#!' + sys.executable + '\nraise SystemExit(3)\n')
+        self.assertEqual(package.sign_windows([str(cli)], timeout=2), 3)
+        self.assertEqual(package.sdk_cli(Path('/sdk')).name, 'tizen.bat' if os.name == 'nt' else 'tizen')
+
     def test_install_rejects_artifact_before_fake_sdb(self):
         for name in ['scripts/tv.py', 'scripts/local_config.py', 'scripts/private_files.py']:
             target = self.root / name

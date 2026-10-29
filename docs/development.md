@@ -47,7 +47,7 @@ The initial custom XML-signature implementation was rejected by the TV. Use the 
 
 ## Another checkout or Mac
 
-Install the official [Samsung TV SDK](https://developer.samsung.com/smarttv/develop/getting-started/setting-up-sdk/installing-tv-sdk.html) and select its path in `.local/signing.json`. The signing runner uses POSIX terminal/process APIs and is supported by these tools on macOS/Linux; Windows needs its own adapted runner. To retain in-place updates to your own existing app, securely transfer its author certificate and password. Keep those credentials local.
+Install the official [Samsung TV SDK](https://developer.samsung.com/smarttv/develop/getting-started/setting-up-sdk/installing-tv-sdk.html) and select its path in `.local/signing.json`. The signing runner uses POSIX terminal/process APIs on macOS/Linux. On Windows it calls `tools\ide\bin\tizen.bat` without a terminal, so both certificate passwords must be saved in Certificate Manager and `password_file` must stay `null`; any password prompt fails. The TV tools use `tools\sdb.exe`. If `python3` is not on the Windows path, run the scripts directly, for example `py scripts\package.py` and `py scripts\tv.py info`. The Windows path has offline tests only and still needs a real signing check. To retain in-place updates to your own existing app, securely transfer its author certificate and password. Keep those credentials local.
 
 For new certificates, use Samsung's [certificate setup](https://developer.samsung.com/smarttv/develop/getting-started/setting-up-sdk/creating-certificates.html). The distributor certificate must include the target TV's DUID. A generic emulator certificate does not establish compatibility with this consumer TV.
 

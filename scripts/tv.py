@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import ipaddress
 import json
+import os
 from pathlib import Path
 import subprocess
 import time
@@ -23,7 +24,7 @@ if not host:
 ipaddress.ip_address(host)
 try:
     settings = load_settings()
-    sdb = settings['sdk_path'] / 'tools/sdb'
+    sdb = settings['sdk_path'] / ('tools/sdb.exe' if os.name == 'nt' else 'tools/sdb')
     if not sdb.is_file():
         raise ValueError('Local SDB tool missing. See docs/development.md.')
     app_id = settings['identity']['app_id']
