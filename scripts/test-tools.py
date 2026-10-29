@@ -12,7 +12,7 @@ from unittest.mock import patch
 import zipfile
 
 from font_assets import write_widget_archive
-from local_config import ROOT, load_settings, manifest_identity, override_identity, read_password
+from local_config import ROOT, load_settings, manifest_identity, override_identity, override_required_version, read_password
 import package
 from private_files import check_signed_widget, check_widget, private_path, secret_content
 
@@ -103,6 +103,25 @@ class ToolTests(unittest.TestCase):
             good.write_bytes(value)
             with self.subTest(length=len(value)), self.assertRaises(ValueError):
                 read_password(good, self.root)
+
+    def test_required_version_override_for_older_tvs(self):
+        self.assertIsNone(load_settings(self.root)['required_version'])
+        self.assertEqual(self.config(profile='Synthetic profile', required_version='5.5')['required_version'], '5.5')
+        for value in ['5', '5.5.0', '10.0', 5.5, '../5.5']:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                self.config(profile='Synthetic profile', required_version=value)
+        original = (self.root / 'app/config.xml').read_bytes()
+        identity = {'package_id': 'AbCdEf1234', 'app_id': 'AbCdEf1234.MyHome'}
+        output = self.root / 'widget.wgt'
+        write_widget_archive(output, root=self.root, include_private=False, identity=identity, required_version='5.5')
+        with zipfile.ZipFile(output) as archive:
+            manifest = archive.read('config.xml')
+        self.assertEqual(manifest_identity(manifest), identity)
+        expected = override_identity(original, identity).replace(b'required_version="6.5"', b'required_version="5.5"')
+        self.assertEqual(manifest, expected)
+        self.assertEqual((self.root / 'app/config.xml').read_bytes(), original)
+        with self.assertRaisesRegex(ValueError, 'required_version attribute'):
+            override_required_version(original.replace(b' required_version="6.5"', b''), '5.5')
 
     def test_widget_identity_overlay_and_private_files(self):
         original = (self.root / 'app/config.xml').read_bytes()

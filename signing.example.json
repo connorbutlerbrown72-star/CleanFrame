@@ -3,5 +3,6 @@
   "profile": "YOUR_CERTIFICATE_PROFILE",
   "package_id": "YOUR_SDK_GENERATED_PACKAGE_ID",
   "app_id": "YOUR_SDK_GENERATED_PACKAGE_ID.CleanFrame",
-  "password_file": null
+  "password_file": null,
+  "required_version": null
 }
